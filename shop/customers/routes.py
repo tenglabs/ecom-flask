@@ -82,10 +82,11 @@ def updateshoppingcart():
 def get_order():
     if current_user.is_authenticated:
         customer_id = current_user.id
+
         invoice = secrets.token_hex(5)
         updateshoppingcart
         try:
-            order = CustomerOrder(invoice=invoice,customer_id=customer_id,orders=session['Shoppingcart'])
+            order = CustomerOrder(invoice=invoice,customer_id=customer_id,customer=current_user,orders=session['Shoppingcart'])
             db.session.add(order)
             db.session.commit()
             session.pop('Shoppingcart')
@@ -120,23 +121,16 @@ def orders(invoice):
 
 @app.route('/orders/list')
 def orders_list():
-    grandTotal = 0
-    subTotal = 0
+
     if current_user.is_authenticated:
 
 
         orders = CustomerOrder.query.all()
-        for _key, product in orders.orders.items():
-            discount = (product['discount'] / 100) * float(product['price'])
-            subTotal += float(product['price']) * int(product['quantity'])
-            subTotal -= discount
-            tax = ("%.2f" % (.06 * float(subTotal)))
-            grandTotal = ("%.2f" % (1.06 * float(subTotal)))
 
 
     else:
         return redirect(url_for('customerLogin'))
-    return render_template('customer/order_list.html',tax=tax,subTotal=subTotal,grandTotal=grandTotal,orders=orders)
+    return render_template('customer/order_list.html',orders=orders)
 
 
 @app.route('/get_pdf/<invoice>', methods=['POST'])
